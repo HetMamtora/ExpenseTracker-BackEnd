@@ -1,4 +1,5 @@
 const Expense = require('../models/Expense');
+const User = require('../models/User');
 const mongoose = require('mongoose');
 
 //ADD EXPENSE
@@ -111,15 +112,15 @@ const clearAllExpenses = async (req, res) => {
 //SORT EXPENSES
 const sortExpenses = async (req, res) => {
     try {
-        const order = req.query.order === 'desc' ? -1 : 1; // Sorting order
+        const order = req.query.order === 'desc' ? -1 : 1;
         const expenses = await Expense.aggregate([
             {
                 $match: {
-                    user: new mongoose.Types.ObjectId(req.user.id), // Match logged-in user
+                    user: new mongoose.Types.ObjectId(req.user.id),
                 },
             },
             {
-                $sort: { amount: order }, // Sort by amount
+                $sort: { amount: order },
             },
         ]);
 
@@ -132,4 +133,20 @@ const sortExpenses = async (req, res) => {
     }
 };
 
-module.exports = {addExpense, getAllExpenses, updateExpense, deleteExpense, clearAllExpenses, sortExpenses};
+//DELETE PROFILE + EXPENSES
+const deleteUserNExpenses = async (req, res) => {
+    try{
+        await Expense.deleteMany({user: req.user.id});
+        await User.findByIdAndDelete(req.user.id);
+
+        res.status(200).json({
+            message: 'User and all associated Expenses are deleted successfully'
+        });
+    }catch(error) {
+        res.status(500).json({
+            error: error.message,
+        });
+    }
+};
+
+module.exports = {addExpense, getAllExpenses, updateExpense, deleteExpense, clearAllExpenses, sortExpenses, deleteUserNExpenses};
